@@ -166,14 +166,22 @@ function radios(cont, name, lista, sel, extra = () => "") {
 }
 
 function pintarControles() {
-  radios("huecos", "hueco", T.huecos, S.hueco, o => o.mm ? `<small>Hueco ${o.mm[0]} × ${o.mm[1]} mm, fondo ${o.mm[2]} mm</small>` : `<small>Tú eliges el hueco en mm</small>`);
-  $("medidaHueco").innerHTML = S.hueco === "libre"
-    ? stepper("ancho", "Ancho del hueco", "mm, por dentro", 5) + stepper("alto", "Alto del hueco", "mm, por dentro", 5) + stepper("fondo", "Fondo", "mm", 5)
-    : "";
+  radios("huecos", "hueco", T.huecos, S.hueco, o => o.mm ? `<small>Hueco ${o.mm[0]} × ${o.mm[1]} mm, fondo ${o.mm[2]} mm</small>` : `<small>Pon tú las medidas abajo</small>`);
+  $("medidaHueco").innerHTML = `<h3 style="font-size:15px;font-weight:500;margin:14px 0 2px">Tamaño de cada casillero <small style="color:var(--muted);font-weight:400">(por dentro, en mm)</small></h3>`
+    + stepper("ancho", "Ancho", "", 5) + stepper("alto", "Alto", "", 5) + stepper("fondo", "Fondo", "", 5);
   $("tamano").innerHTML = stepper("columnas", "Columnas", "casilleros a lo ancho") + stepper("filas", "Filas", "casilleros a lo alto")
     + stepper("cantidad", "Estanterías", "iguales");
   radios("acabados", "acabado", T.acabados, S.acabado, o => o.eur ? `<small>+${eur(o.eur)}</small>` : "");
   if (T.entregas.length) radios("entregas", "entrega", T.entregas, S.entrega, o => o.eur ? `<small>+${eur(o.eur)}</small>` : "");
+}
+
+// Si el cliente cambia las medidas a mano, marca el tipo que coincida (o "otra medida")
+function marcarHueco() {
+  if (S.libreElegido) return;   // si pulsó "otra medida", se queda así
+  const h = T.huecos.find(x => x.mm && x.mm[0] === S.ancho && x.mm[1] === S.alto && x.mm[2] === S.fondo);
+  S.hueco = h ? h.id : "libre";
+  const r = document.querySelector(`input[name=hueco][value="${S.hueco}"]`);
+  if (r) r.checked = true;
 }
 
 function fijar(k, v) {
@@ -196,6 +204,7 @@ document.addEventListener("change", e => {
   if (t.matches("input[data-k]")) { fijar(t.dataset.k, t.value); t.value = S[t.dataset.k]; actualizar(); return; }
   if (t.name === "hueco") {
     S.hueco = t.value;
+    S.libreElegido = t.value === "libre";
     const h = T.huecos.find(x => x.id === t.value);
     if (h.mm) [S.ancho, S.alto, S.fondo] = h.mm;
     pintarControles();
@@ -248,6 +257,7 @@ function dibujar(est, fondo) {
 
 // ---------------------------------------------------------------- precio y WhatsApp
 function actualizar() {
+  marcarHueco();
   const cfg = { columnas: S.columnas, filas: S.filas, ancho: S.ancho, alto: S.alto, fondo: S.fondo, cantidad: S.cantidad, entrega: S.entrega };
   const n = S.columnas * S.filas;
   const demasiados = n > T.max_casilleros;
