@@ -280,21 +280,24 @@
   // ------------------------------------------------------------------ precio (igual que precio_venta() de estanteria.py)
   function redondear(x, paso) { return paso > 0 ? Math.floor(x / paso + 0.5) * paso : Math.round(x * 100) / 100; }
 
-  function precioVenta(tablas, horas, T, entregaId) {
+  function precioVenta(tablas, horas, T, entregaId, acabadoId, cantidad) {
     const madera = tablas * T.precio_tabla_eur;
     const laser = horas * T.euros_hora_laser;
     const porTabla = T.precio_venta_por_tabla_eur || 0;   // si está: precio = tablas × esto
     const trabajo = porTabla ? tablas * porTabla : Math.max(T.minimo_eur, redondear(madera + laser, T.redondeo_eur));
     const ent = (T.entregas || []).find(e => e.id === entregaId) || null;
     const entrega = ent ? ent.eur : 0;   // null = a consultar
+    const ac = (T.acabados || []).find(a => a.id === acabadoId) || null;
+    const acabado = (ac ? ac.eur || 0 : 0) * (cantidad || 1);   // € por estantería
     return {
       por_tabla_eur: porTabla || null,
       madera_eur: Math.round(madera * 100) / 100,
       laser_eur: Math.round(laser * 100) / 100,
       ajuste_eur: Math.round((trabajo - madera - laser) * 100) / 100,
       estanterias_eur: trabajo,
+      acabado_eur: acabado,
       entrega_eur: entrega,
-      total_eur: entrega === null ? null : trabajo + entrega,
+      total_eur: entrega === null ? null : trabajo + acabado + entrega,
     };
   }
 
@@ -319,17 +322,31 @@
       tablas: boards.length,
       metros_corte: cut_m,
       horas_laser: horas,
-      precio: precioVenta(boards.length, horas, T, cfg.entrega),
+      precio: precioVenta(boards.length, horas, T, cfg.entrega, cfg.acabado, cfg.cantidad),
     };
   }
 
   // Código que el cliente manda por WhatsApp y que entiende estanteria.py --codigo
   function codigo(cfg) {
     const g = v => String(+(+v).toFixed(1));
-    return `EST-${cfg.columnas}x${cfg.filas}-${g(cfg.ancho)}x${g(cfg.alto)}x${g(cfg.fondo)}-${cfg.cantidad}` + (cfg.entrega ? `-${cfg.entrega}` : "");
+    return `EST-${cfg.columnas}x${cfg.filas}-${g(cfg.ancho)}x${g(cfg.alto)}x${g(cfg.fondo)}-${cfg.cantidad}` + (cfg.entrega ? `-${cfg.entrega}` : "")
+      + (cfg.acabado && cfg.acabado !== "crudo" ? `-${cfg.acabado}` + (cfg.color ? `-${cfg.color}` : "") : "");
+  }
+  // Lee el código: EST-10x11-100x50x40-3[-entrega][-color-rojo]
+  function leerCodigo(txt, T) {
+    const m = String(txt).match(/EST-(\d+)x(\d+)-([\d.]+)x([\d.]+)x([\d.]+)-(\d+)((?:-[a-z]+)*)/i);
+    if (!m) return null;
+    const c = { columnas: +m[1], filas: +m[2], ancho: +m[3], alto: +m[4], fondo: +m[5], cantidad: +m[6], entrega: null, acabado: "crudo", color: null };
+    const colores = [].concat(...(T.acabados || []).map(a => (a.colores || []).map(x => x[0])));
+    for (const tok of m[7].toLowerCase().split("-").filter(Boolean)) {
+      if ((T.entregas || []).some(e => e.id === tok)) c.entrega = tok;
+      else if ((T.acabados || []).some(a => a.id === tok)) c.acabado = tok;
+      else if (colores.includes(tok)) c.color = tok;
+    }
+    return c;
   }
 
-  const api = { Estanteria, calcular, codigo, precioVenta, nest, perimeter, area, size, bbox };
+  const api = { Estanteria, calcular, codigo, leerCodigo, precioVenta, nest, perimeter, area, size, bbox };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.Calculo = api;
 })(typeof window !== "undefined" ? window : this);

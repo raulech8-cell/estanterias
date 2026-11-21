@@ -21,7 +21,10 @@ TARIFA = {
   {"id": "libre", "texto": "Miniaturas u otra medida", "mm": null}
  ],
  "acabados": [
-  {"id": "crudo", "texto": "Sin pintar (HDF crudo de 3 mm)", "eur": 0}
+  {"id": "crudo", "texto": "Sin pintar (madera natural)", "eur": 0},
+  {"id": "color", "texto": "Pintada en color", "eur": 30, "colores": [
+   ["negro", "#1f1f22"], ["blanco", "#f2f2ee"], ["gris", "#6b7280"], ["rojo", "#d62828"],
+   ["azul", "#1d4ed8"], ["amarillo", "#f4c20d"], ["naranja", "#ff6b00"], ["verde", "#15803d"]]}
  ]
 }
 ;

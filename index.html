@@ -106,6 +106,11 @@
   .barra { background: var(--asfalto); color: #fff; border-top: 4px solid var(--pista); }
   .barra .t { color: var(--amarillo); }
   .barra .s { color: #b9bac1; }
+  .muestras { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+  .muestra { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border: 2px solid var(--line);
+    border-radius: 12px; background: #fff; font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; text-transform: capitalize; }
+  .muestra span { width: 30px; height: 30px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgba(0,0,0,.18); }
+  .muestra[aria-pressed="true"] { border-color: var(--pista); background: #fff3ea; }
   footer { text-align: center; color: var(--muted); font-size: 13px; padding: 0 16px 24px; }
 </style>
 </head>
@@ -144,6 +149,7 @@
     <section class="card">
       <h2><span class="paso">3</span>Acabado</h2>
       <div class="opciones" id="acabados"></div>
+      <div id="colores"></div>
       <div class="opciones" id="entregas" style="margin-top:12px"></div>
     </section>
   </div>
@@ -156,8 +162,8 @@
 <div class="barra" id="barra"></div>
 <footer>Madera HDF de 3 mm cortada con láser. Se monta encajando las piezas. Coches no incluidos 😉</footer>
 
-<script src="tarifa.js?v=5"></script>
-<script src="calculo.js?v=5"></script>
+<script src="tarifa.js?v=6"></script>
+<script src="calculo.js?v=6"></script>
 <script>
 "use strict";
 const T = TARIFA;
@@ -167,12 +173,16 @@ const mm = v => (+v.toFixed(1)).toLocaleString("es-ES");
 
 // Estado inicial (o el que venga en el enlace: #EST-10x11-100x50x40-3-recoger)
 const S = { hueco: "hw", columnas: 10, filas: 10, ancho: 90, alto: 45, fondo: 40, cantidad: 1,
-            acabado: T.acabados[0].id, entrega: T.entregas.length ? T.entregas[0].id : null };
+            acabado: T.acabados[0].id, color: null, entrega: T.entregas.length ? T.entregas[0].id : null };
+const colores = id => ((T.acabados.find(a => a.id === id) || {}).colores || []);
 (function leerEnlace() {
-  const m = decodeURIComponent(location.hash).match(/EST-(\d+)x(\d+)-([\d.]+)x([\d.]+)x([\d.]+)-(\d+)(?:-([a-z-]+))?/i);
-  if (!m) return;
-  Object.assign(S, { columnas: +m[1], filas: +m[2], ancho: +m[3], alto: +m[4], fondo: +m[5], cantidad: +m[6] });
-  if (m[7] && T.entregas.some(e => e.id === m[7])) S.entrega = m[7];
+  const c = Calculo.leerCodigo(decodeURIComponent(location.hash), T);
+  if (!c) return;
+  Object.assign(S, { columnas: c.columnas, filas: c.filas, ancho: c.ancho, alto: c.alto, fondo: c.fondo, cantidad: c.cantidad });
+  if (c.entrega) S.entrega = c.entrega;
+  if (T.acabados.some(a => a.id === c.acabado)) S.acabado = c.acabado;
+  const cs = colores(S.acabado);
+  if (cs.length) S.color = cs.some(x => x[0] === c.color) ? c.color : cs[0][0];
   const h = T.huecos.find(h => h.mm && h.mm[0] === S.ancho && h.mm[1] === S.alto && h.mm[2] === S.fondo);
   S.hueco = h ? h.id : "libre";
 })();
@@ -196,7 +206,10 @@ function pintarControles() {
     + stepper("ancho", "Ancho", "", 5) + stepper("alto", "Alto", "", 5) + stepper("fondo", "Fondo", "", 5);
   $("tamano").innerHTML = stepper("columnas", "Columnas", "casilleros a lo ancho") + stepper("filas", "Filas", "casilleros a lo alto")
     + stepper("cantidad", "Estanterías", "iguales");
-  radios("acabados", "acabado", T.acabados, S.acabado, o => o.eur ? `<small>+${eur(o.eur)}</small>` : "");
+  radios("acabados", "acabado", T.acabados, S.acabado, o => o.eur ? `<small>+${eur(o.eur)} por estantería</small>` : `<small>Color de la madera</small>`);
+  const cs = colores(S.acabado);
+  $("colores").innerHTML = cs.length ? `<div class="muestras" role="radiogroup" aria-label="Color">` + cs.map(([n, hex]) =>
+    `<button type="button" class="muestra" data-color="${n}" aria-pressed="${n === S.color}" title="${n}" style="--c:${hex}"><span></span>${n}</button>`).join("") + `</div>` : "";
   if (T.entregas.length) radios("entregas", "entrega", T.entregas, S.entrega, o => o.eur ? `<small>+${eur(o.eur)}</small>` : "");
 }
 
@@ -218,6 +231,8 @@ function fijar(k, v) {
 }
 
 document.addEventListener("click", e => {
+  const m = e.target.closest("button[data-color]");
+  if (m) { S.color = m.dataset.color; pintarControles(); actualizar(); return; }
   const b = e.target.closest("button[data-k]");
   if (!b) return;
   fijar(b.dataset.k, S[b.dataset.k] + parseFloat(b.dataset.d));
@@ -234,13 +249,31 @@ document.addEventListener("change", e => {
     if (h.mm) [S.ancho, S.alto, S.fondo] = h.mm;
     pintarControles();
   }
-  if (t.name === "acabado") S.acabado = t.value;
+  if (t.name === "acabado") {
+    S.acabado = t.value;
+    const cs = colores(S.acabado);
+    S.color = cs.length ? (cs.some(x => x[0] === S.color) ? S.color : cs[0][0]) : null;
+    pintarControles();
+  }
   if (t.name === "entrega") S.entrega = t.value;
   actualizar();
 });
 
 // ---------------------------------------------------------------- dibujo (frente + fondo en perspectiva)
-function dibujar(est, fondo) {
+function tono(hex, f) {   // f>1 aclara, f<1 oscurece
+  const n = parseInt(hex.slice(1), 16), c = [n >> 16, (n >> 8) & 255, n & 255]
+    .map(v => Math.round(f >= 1 ? v + (255 - v) * (f - 1) : v * f));
+  return "#" + c.map(v => Math.max(0, Math.min(255, v)).toString(16).padStart(2, "0")).join("");
+}
+function paleta(color) {
+  if (!color) return { top: ["#d9b27c", "#c99d63"], lado: ["#a5763f", "#8a5f30"], frente: ["#e2bb84", "#c9985a"],
+    fondo: ["#9c7346", "#c49a66", "#d2ab78"], pared: ["#b58750", "#8e6334"], suelo: ["#e8c896", "#cfa66f"], veta: 1 };
+  const t = f => tono(color, f);
+  return { top: [t(1.18), t(1.05)], lado: [t(.78), t(.64)], frente: [t(1.12), t(.94)],
+    fondo: [t(.62), t(.86), t(.95)], pared: [t(.86), t(.66)], suelo: [t(1.22), t(1.04)], veta: .2 };
+}
+function dibujar(est, fondo, color) {
+  const P = paleta(color);
   const W = est.ow, H = est.oh, t = est.t;
   const dep = Math.min(fondo + t, Math.max(W, H) * 0.25) * 0.85;   // fondo dibujado, en perspectiva caballera
   const dx = dep * 0.7, dy = dep * 0.7;
@@ -251,12 +284,12 @@ function dibujar(est, fondo) {
   const U = Math.max(W, H);
   let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${vbW} ${vbH}">
   <defs>
-    <linearGradient id="gTop" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#d9b27c"/><stop offset="1" stop-color="#c99d63"/></linearGradient>
-    <linearGradient id="gLado" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a5763f"/><stop offset="1" stop-color="#8a5f30"/></linearGradient>
-    <linearGradient id="gFrente" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2bb84"/><stop offset="1" stop-color="#c9985a"/></linearGradient>
-    <linearGradient id="gFondo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9c7346"/><stop offset=".35" stop-color="#c49a66"/><stop offset="1" stop-color="#d2ab78"/></linearGradient>
-    <linearGradient id="gPared" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b58750"/><stop offset="1" stop-color="#8e6334"/></linearGradient>
-    <linearGradient id="gSuelo" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#e8c896"/><stop offset="1" stop-color="#cfa66f"/></linearGradient>
+    <linearGradient id="gTop" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${P.top[0]}"/><stop offset="1" stop-color="${P.top[1]}"/></linearGradient>
+    <linearGradient id="gLado" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${P.lado[0]}"/><stop offset="1" stop-color="${P.lado[1]}"/></linearGradient>
+    <linearGradient id="gFrente" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${P.frente[0]}"/><stop offset="1" stop-color="${P.frente[1]}"/></linearGradient>
+    <linearGradient id="gFondo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${P.fondo[0]}"/><stop offset=".35" stop-color="${P.fondo[1]}"/><stop offset="1" stop-color="${P.fondo[2]}"/></linearGradient>
+    <linearGradient id="gPared" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${P.pared[0]}"/><stop offset="1" stop-color="${P.pared[1]}"/></linearGradient>
+    <linearGradient id="gSuelo" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${P.suelo[0]}"/><stop offset="1" stop-color="${P.suelo[1]}"/></linearGradient>
     <linearGradient id="gBrillo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></linearGradient>
     <filter id="veta" x="0" y="0" width="1" height="1"><feTurbulence type="fractalNoise" baseFrequency="${3 / U} ${60 / U}" numOctaves="2" seed="7"/>
       <feColorMatrix type="matrix" values="0 0 0 0 .42  0 0 0 0 .26  0 0 0 0 .1  0 0 0 1.1 -.35"/><feComposite in2="SourceGraphic" operator="in"/></filter>
@@ -267,11 +300,11 @@ function dibujar(est, fondo) {
   // caras de arriba y derecha
   const top = `${ox},${oy} ${ox + dx},${oy - dy} ${ox + W + dx},${oy - dy} ${ox + W},${oy}`;
   const lado = `${ox + W},${oy} ${ox + W + dx},${oy - dy} ${ox + W + dx},${oy + H - dy} ${ox + W},${oy + H}`;
-  s += `<polygon points="${top}" fill="url(#gTop)"/><polygon points="${top}" fill="#000" filter="url(#veta)" opacity=".35"/>`;
-  s += `<polygon points="${lado}" fill="url(#gLado)"/><polygon points="${lado}" fill="#000" filter="url(#veta)" opacity=".3"/>`;
+  s += `<polygon points="${top}" fill="url(#gTop)"/><polygon points="${top}" fill="#000" filter="url(#veta)" opacity="${.35 * P.veta}"/>`;
+  s += `<polygon points="${lado}" fill="url(#gLado)"/><polygon points="${lado}" fill="#000" filter="url(#veta)" opacity="${.3 * P.veta}"/>`;
   // frente (cantos de la madera)
   s += `<rect x="${ox}" y="${oy}" width="${W}" height="${H}" fill="url(#gFrente)"/>`;
-  s += `<rect x="${ox}" y="${oy}" width="${W}" height="${H}" fill="#000" filter="url(#veta)" opacity=".3"/>`;
+  s += `<rect x="${ox}" y="${oy}" width="${W}" height="${H}" fill="#000" filter="url(#veta)" opacity="${.3 * P.veta}"/>`;
   // interior de cada hueco: fondo, suelo y pared izquierda (se ve en perspectiva)
   const f = dx / (fondo + t);
   const hx = Math.min(fondo * f, est.cw * 0.4), hy = Math.min(fondo * f, est.ch * 0.4);
@@ -314,12 +347,12 @@ function dibujar(est, fondo) {
 // ---------------------------------------------------------------- precio y WhatsApp
 function actualizar() {
   marcarHueco();
-  const cfg = { columnas: S.columnas, filas: S.filas, ancho: S.ancho, alto: S.alto, fondo: S.fondo, cantidad: S.cantidad, entrega: S.entrega };
+  const cfg = { columnas: S.columnas, filas: S.filas, ancho: S.ancho, alto: S.alto, fondo: S.fondo, cantidad: S.cantidad, entrega: S.entrega, acabado: S.acabado, color: S.acabado === "crudo" ? null : S.color };
   const n = S.columnas * S.filas;
   const demasiados = n > T.max_casilleros;
   const r = Calculo.calcular(cfg, T);
   const est = r.est;
-  $("dibujo").outerHTML = dibujar(est, S.fondo).replace("<svg ", '<svg id="dibujo" role="img" aria-label="Vista previa de la estantería" ');
+  $("dibujo").outerHTML = dibujar(est, S.fondo, S.acabado === "color" && S.color ? (colores(S.acabado).find(x => x[0] === S.color) || [])[1] : null).replace("<svg ", '<svg id="dibujo" role="img" aria-label="Vista previa de la estantería" ');
   $("medidas").innerHTML = `<span><b>${n}</b> casilleros</span><span>Por fuera: <b>${mm(est.ow / 10)} × ${mm(est.oh / 10)} cm</b>, fondo <b>${mm((S.fondo + T.grosor_mm) / 10)} cm</b></span>`;
 
   let aviso = "";
@@ -336,19 +369,19 @@ function actualizar() {
     return;
   }
   const P = r.precio, acab = T.acabados.find(a => a.id === S.acabado), ent = T.entregas.find(e => e.id === S.entrega);
-  const extraAcab = (acab.eur || 0) * S.cantidad;
-  const total = P.total_eur === null ? null : P.total_eur + extraAcab;
+  const acabTxt = acab.texto + (S.acabado !== "crudo" && S.color ? ` (${S.color})` : "");
+  const total = P.total_eur;
   const filas = P.por_tabla_eur
     ? [[`${r.tablas} ${r.tablas === 1 ? "tabla" : "tablas"} de madera × ${eur(P.por_tabla_eur)}<small style="display:block;color:var(--muted)">Cortadas, listas para montar</small>`, eur(P.estanterias_eur)]]
     : [[`Madera: ${r.tablas} ${r.tablas === 1 ? "tabla" : "tablas"} de HDF`, eur(P.madera_eur)],
        [`Corte con láser: ${mm(r.horas_laser)} h`, eur(P.laser_eur)]];
   if (!P.por_tabla_eur && Math.abs(P.ajuste_eur) >= 0.01) filas.push([`Redondeo`, (P.ajuste_eur > 0 ? "+" : "−") + eur(Math.abs(P.ajuste_eur))]);
-  if (extraAcab) filas.push([acab.texto, eur(extraAcab)]);
+  if (P.acabado_eur) filas.push([`${acabTxt}${S.cantidad > 1 ? ` × ${S.cantidad}` : ""}`, eur(P.acabado_eur)]);
   if (ent && ent.eur !== null) filas.push([ent.texto, ent.eur ? eur(ent.eur) : "gratis"]);   // envío: sin precio
-  const totTxt = eur(total === null ? P.estanterias_eur + extraAcab : total);
+  const totTxt = eur(total === null ? P.estanterias_eur + P.acabado_eur : total);
   $("precio").innerHTML = `<h2>Precio</h2>
     <div class="total">${totTxt}</div>
-    <div class="sub">${S.cantidad > 1 ? `${S.cantidad} estanterías de ` : ""}${S.columnas} × ${S.filas} casilleros · ${acab.texto}</div>
+    <div class="sub">${S.cantidad > 1 ? `${S.cantidad} estanterías de ` : ""}${S.columnas} × ${S.filas} casilleros · ${acabTxt}</div>
     <table class="desglose">${filas.map(f => `<tr><td>${f[0]}</td><td>${f[1]}</td></tr>`).join("")}
       <tr class="tot"><td>Total</td><td>${totTxt}</td></tr></table>
     <a class="boton" id="wa" target="_blank" rel="noopener">Pedir por WhatsApp</a>
@@ -363,7 +396,7 @@ function actualizar() {
 • Hueco: ${mm(S.ancho)} × ${mm(S.alto)} mm, fondo ${mm(S.fondo)} mm${hueco && hueco.mm ? ` (${hueco.texto})` : ""}
 • Medida por fuera: ${mm(est.ow / 10)} × ${mm(est.oh / 10)} cm, fondo ${mm((S.fondo + T.grosor_mm) / 10)} cm
 • Cantidad: ${S.cantidad}
-• Acabado: ${acab.texto}
+• Acabado: ${acabTxt}
 ${ent ? `• Entrega: ${ent.texto}
 ` : ""}• Precio en la web: ${totTxt}
 Código: ${cod}${enlace}`;
