@@ -131,8 +131,8 @@
 <div class="barra" id="barra"></div>
 <footer>Madera HDF de 3 mm cortada con láser. Se monta encajando las piezas.</footer>
 
-<script src="tarifa.js?v=2"></script>
-<script src="calculo.js?v=2"></script>
+<script src="tarifa.js?v=3"></script>
+<script src="calculo.js?v=3"></script>
 <script>
 "use strict";
 const T = TARIFA;
@@ -282,11 +282,11 @@ function actualizar() {
   const P = r.precio, acab = T.acabados.find(a => a.id === S.acabado), ent = T.entregas.find(e => e.id === S.entrega);
   const extraAcab = (acab.eur || 0) * S.cantidad;
   const total = P.total_eur === null ? null : P.total_eur + extraAcab;
-  const filas = [
-    [`Madera: ${r.tablas} ${r.tablas === 1 ? "tabla" : "tablas"} de HDF`, eur(P.madera_eur)],
-    [`Corte con láser: ${mm(r.horas_laser)} h`, eur(P.laser_eur)],
-  ];
-  if (Math.abs(P.ajuste_eur) >= 0.01) filas.push([`Redondeo`, (P.ajuste_eur > 0 ? "+" : "−") + eur(Math.abs(P.ajuste_eur))]);
+  const filas = P.por_tabla_eur
+    ? [[`${r.tablas} ${r.tablas === 1 ? "tabla" : "tablas"} de madera × ${eur(P.por_tabla_eur)}<small style="display:block;color:var(--muted)">Cortadas, listas para montar</small>`, eur(P.estanterias_eur)]]
+    : [[`Madera: ${r.tablas} ${r.tablas === 1 ? "tabla" : "tablas"} de HDF`, eur(P.madera_eur)],
+       [`Corte con láser: ${mm(r.horas_laser)} h`, eur(P.laser_eur)]];
+  if (!P.por_tabla_eur && Math.abs(P.ajuste_eur) >= 0.01) filas.push([`Redondeo`, (P.ajuste_eur > 0 ? "+" : "−") + eur(Math.abs(P.ajuste_eur))]);
   if (extraAcab) filas.push([acab.texto, eur(extraAcab)]);
   if (ent && ent.eur !== null) filas.push([ent.texto, ent.eur ? eur(ent.eur) : "gratis"]);   // envío: sin precio
   const totTxt = eur(total === null ? P.estanterias_eur + extraAcab : total);

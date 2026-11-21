@@ -283,10 +283,12 @@
   function precioVenta(tablas, horas, T, entregaId) {
     const madera = tablas * T.precio_tabla_eur;
     const laser = horas * T.euros_hora_laser;
-    const trabajo = Math.max(T.minimo_eur, redondear(madera + laser, T.redondeo_eur));
+    const porTabla = T.precio_venta_por_tabla_eur || 0;   // si está: precio = tablas × esto
+    const trabajo = porTabla ? tablas * porTabla : Math.max(T.minimo_eur, redondear(madera + laser, T.redondeo_eur));
     const ent = (T.entregas || []).find(e => e.id === entregaId) || null;
     const entrega = ent ? ent.eur : 0;   // null = a consultar
     return {
+      por_tabla_eur: porTabla || null,
       madera_eur: Math.round(madera * 100) / 100,
       laser_eur: Math.round(laser * 100) / 100,
       ajuste_eur: Math.round((trabajo - madera - laser) * 100) / 100,
