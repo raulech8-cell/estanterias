@@ -324,7 +324,7 @@
   // Código que el cliente manda por WhatsApp y que entiende estanteria.py --codigo
   function codigo(cfg) {
     const g = v => String(+(+v).toFixed(1));
-    return `EST-${cfg.columnas}x${cfg.filas}-${g(cfg.ancho)}x${g(cfg.alto)}x${g(cfg.fondo)}-${cfg.cantidad}-${cfg.entrega}`;
+    return `EST-${cfg.columnas}x${cfg.filas}-${g(cfg.ancho)}x${g(cfg.alto)}x${g(cfg.fondo)}-${cfg.cantidad}` + (cfg.entrega ? `-${cfg.entrega}` : "");
   }
 
   const api = { Estanteria, calcular, codigo, precioVenta, nest, perimeter, area, size, bbox };

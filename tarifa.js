@@ -13,11 +13,7 @@ TARIFA = {
  "minimo_eur": 0,
  "max_casilleros": 110,
  "max_cantidad": 10,
- "entregas": [
-  {"id": "recoger", "texto": "Recoger en Charilla (Jaén)", "eur": 0},
-  {"id": "llevar", "texto": "Te la llevo (Jaén y Granada, a confirmar)", "eur": 10},
-  {"id": "envio", "texto": "Envío por agencia (precio a consultar)", "eur": null}
- ],
+ "entregas": [],
  "huecos": [
   {"id": "hw", "texto": "Coche 1/64 (Hot Wheels, Matchbox)", "mm": [90, 45, 40]},
   {"id": "hw-holgado", "texto": "Coche 1/64 holgado", "mm": [100, 50, 40]},

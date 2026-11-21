@@ -5,30 +5,41 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Estantería de casilleros a medida · Soluciones 3D Studio</title>
 <meta name="description" content="Diseña tu estantería de casilleros para coches 1/64, Hot Wheels o miniaturas y mira el precio al momento.">
+<meta name="theme-color" content="#3f4043">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* Identidad de soluciones3dstudio.com: gris #3F4043, amarillo #FFED00, beige #E2E1D8, letra Lexend */
   :root {
-    --bg: #f6f1ea; --card: #ffffff; --ink: #2b2118; --muted: #6f6257; --line: #e4d9cc;
+    --bg: #f8f8f8; --card: #ffffff; --ink: #232323; --muted: #5f6066; --line: #e2e1d8;
+    --marca: #3f4043; --amarillo: #ffed00; --amarillo-suave: #fffbcc; --beige: #e2e1d8;
     --wood: #c89f6b; --wood-dark: #a37a49; --wood-side: #b58a55; --cell: #efe2cd; --cell-in: #e2cfb1;
-    --accent: #1f7a4d; --accent-ink: #fff; --warn-bg: #fff4e0; --warn: #8a5a00; --err-bg: #fdecec; --err: #a12828;
+    --accent: var(--amarillo); --accent-ink: var(--marca); --warn-bg: #fff4e0; --warn: #8a5a00; --err-bg: #fdecec; --err: #a12828;
     --radius: 14px;
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
   body { margin: 0; background: var(--bg); color: var(--ink);
-    font: 17px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+    font: 17px/1.45 Lexend, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  .barra-marca { background: var(--marca); }
+  .barra-marca div { max-width: 1100px; margin: 0 auto; padding: 8px 16px; display: flex; align-items: center; gap: 12px; }
+  .barra-marca img { height: 46px; width: auto; display: block; }
+  .barra-marca a { color: #fff; text-decoration: none; font-size: 14px; margin-left: auto; opacity: .85; }
   header { padding: 18px 16px 6px; max-width: 1100px; margin: 0 auto; }
   header .marca { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-  h1 { font-size: 24px; line-height: 1.2; margin: 4px 0 4px; }
+  h1 { font-size: 26px; line-height: 1.2; margin: 4px 0 6px; font-weight: 600; }
   header p { margin: 0; color: var(--muted); }
+  h1 mark { background: linear-gradient(transparent 60%, var(--amarillo) 60%); color: inherit; }
   main { max-width: 1100px; margin: 0 auto; padding: 10px 16px 120px; display: grid; gap: 16px; }
   @media (min-width: 900px) {
     main { grid-template-columns: 1fr 400px; align-items: start; }
     .lateral { position: sticky; top: 12px; }
   }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
-  .card h2 { font-size: 16px; margin: 0 0 10px; }
-  .paso { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
-    background: var(--ink); color: #fff; font-size: 13px; margin-right: 6px; }
+  .card h2 { font-size: 16px; margin: 0 0 10px; font-weight: 500; }
+  .paso { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+    background: var(--amarillo); color: var(--marca); font-size: 14px; font-weight: 600; margin-right: 6px; }
   .vista { padding: 10px; }
   .vista svg { width: 100%; height: auto; display: block; max-height: 60vh; }
   .medidas { display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: center; color: var(--muted); font-size: 15px; padding: 4px 0 2px; }
@@ -36,8 +47,8 @@
   .opciones { display: grid; gap: 8px; }
   .opcion { display: flex; gap: 10px; align-items: center; padding: 12px; border: 2px solid var(--line);
     border-radius: 12px; cursor: pointer; background: #fff; }
-  .opcion:has(input:checked) { border-color: var(--accent); background: #f0f8f3; }
-  .opcion input { width: 20px; height: 20px; accent-color: var(--accent); margin: 0; flex: none; }
+  .opcion:has(input:checked) { border-color: var(--marca); background: var(--amarillo-suave); }
+  .opcion input { width: 20px; height: 20px; accent-color: var(--marca); margin: 0; flex: none; }
   .opcion small { display: block; color: var(--muted); font-size: 14px; }
   .fila { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; }
   .fila + .fila { border-top: 1px solid var(--line); }
@@ -61,7 +72,7 @@
   .desglose td:last-child { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .desglose tr.tot td { font-weight: 700; font-size: 17px; }
   .boton { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 54px;
-    border-radius: 12px; border: 0; background: var(--accent); color: var(--accent-ink); font-size: 18px; font-weight: 700;
+    border-radius: 27px; border: 0; background: var(--accent); color: var(--accent-ink); font-size: 18px; font-weight: 600;
     text-decoration: none; margin-top: 12px; cursor: pointer; }
   .boton[aria-disabled="true"] { background: #9aa59f; pointer-events: none; }
   .nota { color: var(--muted); font-size: 14px; margin: 10px 0 0; }
@@ -76,9 +87,13 @@
 </style>
 </head>
 <body>
+<div class="barra-marca"><div>
+  <a href="https://www.soluciones3dstudio.com/" style="margin:0;opacity:1"><img src="https://www.soluciones3dstudio.com/wp-content/uploads/2025/02/logo.png" alt="Soluciones 3D"></a>
+  <a href="https://www.soluciones3dstudio.com/">soluciones3dstudio.com</a>
+</div></div>
 <header>
-  <div class="marca">Soluciones 3D Studio · Charilla (Jaén)</div>
-  <h1>Tu estantería de casilleros, a medida</h1>
+  <div class="marca">Corte láser · Charilla (Jaén)</div>
+  <h1>Tu estantería de casilleros, <mark>a medida</mark></h1>
   <p>Elige el tamaño. Mira cómo queda y el precio al momento.</p>
 </header>
 
@@ -102,7 +117,7 @@
     </section>
 
     <section class="card">
-      <h2><span class="paso">3</span>Acabado y entrega</h2>
+      <h2><span class="paso">3</span>Acabado</h2>
       <div class="opciones" id="acabados"></div>
       <div class="opciones" id="entregas" style="margin-top:12px"></div>
     </section>
@@ -127,7 +142,7 @@ const mm = v => (+v.toFixed(1)).toLocaleString("es-ES");
 
 // Estado inicial (o el que venga en el enlace: #EST-10x11-100x50x40-3-recoger)
 const S = { hueco: "hw", columnas: 10, filas: 10, ancho: 90, alto: 45, fondo: 40, cantidad: 1,
-            acabado: T.acabados[0].id, entrega: T.entregas[0].id };
+            acabado: T.acabados[0].id, entrega: T.entregas.length ? T.entregas[0].id : null };
 (function leerEnlace() {
   const m = decodeURIComponent(location.hash).match(/EST-(\d+)x(\d+)-([\d.]+)x([\d.]+)x([\d.]+)-(\d+)(?:-([a-z-]+))?/i);
   if (!m) return;
@@ -158,7 +173,7 @@ function pintarControles() {
   $("tamano").innerHTML = stepper("columnas", "Columnas", "casilleros a lo ancho") + stepper("filas", "Filas", "casilleros a lo alto")
     + stepper("cantidad", "Estanterías", "iguales");
   radios("acabados", "acabado", T.acabados, S.acabado, o => o.eur ? `<small>+${eur(o.eur)}</small>` : "");
-  radios("entregas", "entrega", T.entregas, S.entrega, o => o.eur ? `<small>+${eur(o.eur)}</small>` : "");
+  if (T.entregas.length) radios("entregas", "entrega", T.entregas, S.entrega, o => o.eur ? `<small>+${eur(o.eur)}</small>` : "");
 }
 
 function fijar(k, v) {
@@ -263,8 +278,8 @@ function actualizar() {
   ];
   if (Math.abs(P.ajuste_eur) >= 0.01) filas.push([`Redondeo`, (P.ajuste_eur > 0 ? "+" : "−") + eur(Math.abs(P.ajuste_eur))]);
   if (extraAcab) filas.push([acab.texto, eur(extraAcab)]);
-  filas.push([ent.texto, ent.eur === null ? "a consultar" : ent.eur ? eur(ent.eur) : "gratis"]);
-  const totTxt = total === null ? eur(P.estanterias_eur + extraAcab) + " + envío" : eur(total);
+  if (ent && ent.eur !== null) filas.push([ent.texto, ent.eur ? eur(ent.eur) : "gratis"]);   // envío: sin precio
+  const totTxt = eur(total === null ? P.estanterias_eur + extraAcab : total);
   $("precio").innerHTML = `<h2>Precio</h2>
     <div class="total">${totTxt}</div>
     <div class="sub">${S.cantidad > 1 ? `${S.cantidad} estanterías de ` : ""}${S.columnas} × ${S.filas} casilleros · ${acab.texto}</div>
@@ -283,8 +298,8 @@ function actualizar() {
 • Medida por fuera: ${mm(est.ow / 10)} × ${mm(est.oh / 10)} cm, fondo ${mm((S.fondo + T.grosor_mm) / 10)} cm
 • Cantidad: ${S.cantidad}
 • Acabado: ${acab.texto}
-• Entrega: ${ent.texto}
-• Precio en la web: ${totTxt}
+${ent ? `• Entrega: ${ent.texto}
+` : ""}• Precio en la web: ${totTxt}
 Código: ${cod}${enlace}`;
   const url = `https://wa.me/${T.telefono_whatsapp}?text=` + encodeURIComponent(msg);
   $("wa").href = url; $("wa2").href = url;
