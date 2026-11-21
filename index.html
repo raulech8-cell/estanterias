@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Estantería de casilleros a medida · Soluciones 3D Studio</title>
-<meta name="description" content="Diseña tu estantería de casilleros para coches 1/64, Hot Wheels o miniaturas y mira el precio al momento.">
+<meta name="description" content="Diseña tu estantería de casilleros para coches a escala 1/64 o miniaturas y mira el precio al momento.">
 <meta name="theme-color" content="#3f4043">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -83,6 +83,29 @@
   .barra .s { color: var(--muted); font-size: 13px; }
   .barra a { margin: 0 0 0 auto; width: auto; padding: 0 18px; min-height: 46px; font-size: 16px; }
   @media (min-width: 900px) { .barra { display: none; } main { padding-bottom: 40px; } }
+  /* --- tema carreras: bandera a cuadros, pista naranja, podio oscuro --- */
+  :root { --pista: #ff6b00; --asfalto: #26272b; }
+  .cuadros { height: 12px; background: repeating-conic-gradient(#1b1b1b 0 25%, #fff 0 50%) 0 0 / 24px 24px; }
+  .pista { max-width: 1100px; margin: 8px auto 0; height: 16px; border-radius: 8px; background: var(--pista);
+    position: relative; overflow: hidden; }
+  @media (max-width: 1132px) { .pista { margin: 8px 16px 0; } }
+  .pista::after { content: ""; position: absolute; left: 0; right: 0; top: 7px; height: 2px;
+    background: repeating-linear-gradient(90deg, #fff 0 18px, transparent 18px 32px); }
+  h1 { font-size: 30px; font-weight: 700; font-style: oblique 10deg; letter-spacing: -.01em; transform: skewX(-6deg); transform-origin: left; }
+  .paso { background: var(--pista); color: #fff; font-style: oblique 10deg; }
+  .opcion:has(input:checked) { border-color: var(--pista); background: #fff3ea; }
+  .opcion input { accent-color: var(--pista); }
+  .vista { border-top: 6px solid var(--pista); }
+  .precio { background: var(--asfalto); color: #fff; border: 0; position: relative; overflow: hidden; padding-top: 26px; }
+  .precio::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 12px;
+    background: repeating-conic-gradient(#1b1b1b 0 25%, #fff 0 50%) 0 0 / 24px 24px; }
+  .precio h2 { color: #c9c9cf; }
+  .precio .total { color: var(--amarillo); font-style: oblique 10deg; }
+  .precio .sub, .precio .nota, .precio .codigo, .precio small { color: #b9bac1 !important; }
+  .precio .desglose td { border-top-color: #44454b; }
+  .barra { background: var(--asfalto); color: #fff; border-top: 4px solid var(--pista); }
+  .barra .t { color: var(--amarillo); }
+  .barra .s { color: #b9bac1; }
   footer { text-align: center; color: var(--muted); font-size: 13px; padding: 0 16px 24px; }
 </style>
 </head>
@@ -91,11 +114,13 @@
   <a href="https://www.soluciones3dstudio.com/" style="margin:0;opacity:1"><img src="https://www.soluciones3dstudio.com/wp-content/uploads/2025/02/logo.png" alt="Soluciones 3D"></a>
   <a href="https://www.soluciones3dstudio.com/">soluciones3dstudio.com</a>
 </div></div>
+<div class="cuadros" aria-hidden="true"></div>
 <header>
-  <div class="marca">Corte láser · Charilla (Jaén)</div>
-  <h1>Tu estantería de casilleros, <mark>a medida</mark></h1>
-  <p>Elige el tamaño. Mira cómo queda y el precio al momento.</p>
+  <div class="marca">🏁 Corte láser · Charilla (Jaén)</div>
+  <h1>Aparca tu colección <mark>a medida</mark></h1>
+  <p>Estantería de casilleros para coches a escala 1/64 y miniaturas. Elige el tamaño y mira el precio al momento.</p>
 </header>
+<div class="pista" aria-hidden="true"></div>
 
 <main>
   <div class="principal" style="display:grid;gap:16px">
@@ -129,10 +154,10 @@
 </main>
 
 <div class="barra" id="barra"></div>
-<footer>Madera HDF de 3 mm cortada con láser. Se monta encajando las piezas.</footer>
+<footer>Madera HDF de 3 mm cortada con láser. Se monta encajando las piezas. Coches no incluidos 😉</footer>
 
-<script src="tarifa.js?v=4"></script>
-<script src="calculo.js?v=4"></script>
+<script src="tarifa.js?v=5"></script>
+<script src="calculo.js?v=5"></script>
 <script>
 "use strict";
 const T = TARIFA;
@@ -235,14 +260,20 @@ function dibujar(est, fondo) {
     s += `<rect x="${x}" y="${y}" width="${est.cw}" height="${est.ch}" fill="var(--cell-in)"/>`;
     s += `<rect x="${x + sh}" y="${y + sh}" width="${est.cw - sh}" height="${est.ch - sh}" fill="var(--cell)"/>`;
   }
-  // coche de referencia (1/64 ≈ 75 mm de largo, 28 de alto) en el primer hueco si cabe
+  // coches 1/64 (≈ 75 mm de largo, 28 de alto) aparcados en los huecos, de colores
   if (est.cw >= 60 && est.ch >= 25) {
     const L = 75, A = 28, k = Math.min(1, (est.cw - 6) / L, (est.ch - 4) / A);
-    const cx = ox + t + (est.cw - L * k) / 2, cy = oy + t + est.ch - 2 - A * k;
-    const g = (px, py) => `${cx + px * k},${cy + py * k}`;
-    s += `<path d="M${g(2, 20)} L${g(4, 12)} L${g(20, 10)} L${g(30, 2)} L${g(52, 2)} L${g(62, 10)} L${g(73, 12)} L${g(74, 20)} Z" fill="#c0392b"/>`;
-    s += `<path d="M${g(32, 4)} L${g(50, 4)} L${g(57, 10)} L${g(26, 10)} Z" fill="#cfe3ef"/>`;
-    s += `<circle cx="${cx + 17 * k}" cy="${cy + 21 * k}" r="${6.5 * k}" fill="#222"/><circle cx="${cx + 60 * k}" cy="${cy + 21 * k}" r="${6.5 * k}" fill="#222"/>`;
+    const COL = ["#e63946", "#1d6fe0", "#ff7a00", "#2a9d8f", "#8e44ad", "#f4c20d", "#222831", "#ec4899", "#16a34a"];
+    for (let i = 0; i < est.cols; i++) for (let j = 0; j < est.rows; j++) {
+      const cx = ox + t + i * (est.cw + t) + (est.cw - L * k) / 2, cy = oy + t + j * (est.ch + t) + est.ch - 2 - A * k;
+      const g = (px, py) => `${cx + px * k},${cy + py * k}`;
+      const c = COL[(i * 7 + j * 4) % COL.length];
+      s += `<path d="M${g(2, 20)} L${g(4, 12)} L${g(20, 10)} L${g(30, 2)} L${g(52, 2)} L${g(62, 10)} L${g(73, 12)} L${g(74, 20)} Z" fill="${c}"/>`;
+      s += `<path d="M${g(32, 4)} L${g(50, 4)} L${g(57, 10)} L${g(26, 10)} Z" fill="#cfe3ef"/>`;
+      s += `<path d="M${g(6, 15)} L${g(70, 15)}" stroke="#fff" stroke-opacity=".55" stroke-width="${1.6 * k}"/>`;
+      s += `<circle cx="${cx + 17 * k}" cy="${cy + 21 * k}" r="${6.5 * k}" fill="#1b1b1b"/><circle cx="${cx + 60 * k}" cy="${cy + 21 * k}" r="${6.5 * k}" fill="#1b1b1b"/>`;
+      s += `<circle cx="${cx + 17 * k}" cy="${cy + 21 * k}" r="${2.6 * k}" fill="#c9c9c9"/><circle cx="${cx + 60 * k}" cy="${cy + 21 * k}" r="${2.6 * k}" fill="#c9c9c9"/>`;
+    }
   }
   // cotas
   const cy2 = oy + H + lab * 0.55, cx2 = ox - lab * 0.55;

@@ -16,8 +16,8 @@ TARIFA = {
  "max_cantidad": 10,
  "entregas": [],
  "huecos": [
-  {"id": "hw", "texto": "Coche 1/64 (Hot Wheels, Matchbox)", "mm": [90, 45, 40]},
-  {"id": "hw-holgado", "texto": "Coche 1/64 holgado", "mm": [100, 50, 40]},
+  {"id": "hw", "texto": "Coche a escala 1/64", "mm": [90, 45, 40]},
+  {"id": "hw-holgado", "texto": "Coche 1/64 con más hueco", "mm": [100, 50, 40]},
   {"id": "libre", "texto": "Miniaturas u otra medida", "mm": null}
  ],
  "acabados": [
