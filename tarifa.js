@@ -3,7 +3,7 @@ TARIFA = {
  "version": 1,
  "telefono_whatsapp": "34626755127",
  "precio_tabla_eur": 6.30,
- "precio_venta_por_tabla_eur": 15,
+ "precio_venta_por_tabla_eur": 20,
  "tabla_mm": [1220, 610],
  "grosor_mm": 3,
  "holgura_mm": 1,
