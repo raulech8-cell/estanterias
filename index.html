@@ -242,37 +242,62 @@ document.addEventListener("change", e => {
 // ---------------------------------------------------------------- dibujo (frente + fondo en perspectiva)
 function dibujar(est, fondo) {
   const W = est.ow, H = est.oh, t = est.t;
-  const dep = Math.min(fondo + t, Math.max(W, H) * 0.25) * 0.6;   // fondo dibujado, en perspectiva caballera
+  const dep = Math.min(fondo + t, Math.max(W, H) * 0.25) * 0.85;   // fondo dibujado, en perspectiva caballera
   const dx = dep * 0.7, dy = dep * 0.7;
   const pad = Math.max(W, H) * 0.06, lab = Math.max(W, H) * 0.05;
   const vbW = W + dx + pad * 2 + lab, vbH = H + dy + pad * 2 + lab;
   const ox = pad + lab, oy = pad + dy;
   const fs = Math.max(W, H) * 0.045;
-  let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${vbW} ${vbH}">`;
-  // laterales (arriba y derecha)
-  s += `<polygon points="${ox},${oy} ${ox + dx},${oy - dy} ${ox + W + dx},${oy - dy} ${ox + W},${oy}" fill="var(--wood-side)"/>`;
-  s += `<polygon points="${ox + W},${oy} ${ox + W + dx},${oy - dy} ${ox + W + dx},${oy + H - dy} ${ox + W},${oy + H}" fill="var(--wood-dark)"/>`;
-  // frente
-  s += `<rect x="${ox}" y="${oy}" width="${W}" height="${H}" fill="var(--wood)"/>`;
-  const sh = Math.min(est.cw, est.ch) * 0.18;   // sombra interior
+  const U = Math.max(W, H);
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${vbW} ${vbH}">
+  <defs>
+    <linearGradient id="gTop" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#d9b27c"/><stop offset="1" stop-color="#c99d63"/></linearGradient>
+    <linearGradient id="gLado" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a5763f"/><stop offset="1" stop-color="#8a5f30"/></linearGradient>
+    <linearGradient id="gFrente" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2bb84"/><stop offset="1" stop-color="#c9985a"/></linearGradient>
+    <linearGradient id="gFondo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9c7346"/><stop offset=".35" stop-color="#c49a66"/><stop offset="1" stop-color="#d2ab78"/></linearGradient>
+    <linearGradient id="gPared" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b58750"/><stop offset="1" stop-color="#8e6334"/></linearGradient>
+    <linearGradient id="gSuelo" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#e8c896"/><stop offset="1" stop-color="#cfa66f"/></linearGradient>
+    <linearGradient id="gBrillo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <filter id="veta" x="0" y="0" width="1" height="1"><feTurbulence type="fractalNoise" baseFrequency="${3 / U} ${60 / U}" numOctaves="2" seed="7"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 .42  0 0 0 0 .26  0 0 0 0 .1  0 0 0 1.1 -.35"/><feComposite in2="SourceGraphic" operator="in"/></filter>
+    <filter id="difuso" x="-20%" y="-20%" width="140%" height="160%"><feGaussianBlur stdDeviation="${U * 0.018}"/></filter>
+  </defs>`;
+  // sombra en el suelo
+  s += `<ellipse cx="${ox + W / 2 + dx / 2}" cy="${oy + H + U * 0.01}" rx="${W * 0.55}" ry="${U * 0.03}" fill="#000" opacity=".22" filter="url(#difuso)"/>`;
+  // caras de arriba y derecha
+  const top = `${ox},${oy} ${ox + dx},${oy - dy} ${ox + W + dx},${oy - dy} ${ox + W},${oy}`;
+  const lado = `${ox + W},${oy} ${ox + W + dx},${oy - dy} ${ox + W + dx},${oy + H - dy} ${ox + W},${oy + H}`;
+  s += `<polygon points="${top}" fill="url(#gTop)"/><polygon points="${top}" fill="#000" filter="url(#veta)" opacity=".35"/>`;
+  s += `<polygon points="${lado}" fill="url(#gLado)"/><polygon points="${lado}" fill="#000" filter="url(#veta)" opacity=".3"/>`;
+  // frente (cantos de la madera)
+  s += `<rect x="${ox}" y="${oy}" width="${W}" height="${H}" fill="url(#gFrente)"/>`;
+  s += `<rect x="${ox}" y="${oy}" width="${W}" height="${H}" fill="#000" filter="url(#veta)" opacity=".3"/>`;
+  // interior de cada hueco: fondo, suelo y pared izquierda (se ve en perspectiva)
+  const f = dx / (fondo + t);
+  const hx = Math.min(fondo * f, est.cw * 0.4), hy = Math.min(fondo * f, est.ch * 0.4);
   for (let i = 0; i < est.cols; i++) for (let j = 0; j < est.rows; j++) {
-    const x = ox + t + i * (est.cw + t), y = oy + t + j * (est.ch + t);
-    s += `<rect x="${x}" y="${y}" width="${est.cw}" height="${est.ch}" fill="var(--cell-in)"/>`;
-    s += `<rect x="${x + sh}" y="${y + sh}" width="${est.cw - sh}" height="${est.ch - sh}" fill="var(--cell)"/>`;
+    const x = ox + t + i * (est.cw + t), y = oy + t + j * (est.ch + t), w = est.cw, h = est.ch;
+    s += `<rect x="${x + hx}" y="${y}" width="${w - hx}" height="${h - hy}" fill="url(#gFondo)"/>`;
+    s += `<polygon points="${x},${y + h} ${x + w},${y + h} ${x + w},${y + h - hy} ${x + hx},${y + h - hy}" fill="url(#gSuelo)"/>`;
+    s += `<polygon points="${x},${y} ${x + hx},${y} ${x + hx},${y + h - hy} ${x},${y + h}" fill="url(#gPared)"/>`;
+    s += `<rect x="${x}" y="${y}" width="${w}" height="${Math.max(h * 0.06, 1)}" fill="#000" opacity=".18"/>`;   // sombra bajo el techo
   }
-  // coches 1/64 (≈ 75 mm de largo, 28 de alto) aparcados en los huecos, de colores
+  // coches 1/64 (≈ 75 mm de largo, 28 de alto) aparcados en el suelo de cada hueco
   if (est.cw >= 60 && est.ch >= 25) {
-    const L = 75, A = 28, k = Math.min(1, (est.cw - 6) / L, (est.ch - 4) / A);
+    const L = 75, A = 28, k = Math.min(0.92, (est.cw - hx - 4) / L, (est.ch - hy * 0.5 - 4) / A);
     const COL = ["#e63946", "#1d6fe0", "#ff7a00", "#2a9d8f", "#8e44ad", "#f4c20d", "#222831", "#ec4899", "#16a34a"];
     for (let i = 0; i < est.cols; i++) for (let j = 0; j < est.rows; j++) {
-      const cx = ox + t + i * (est.cw + t) + (est.cw - L * k) / 2, cy = oy + t + j * (est.ch + t) + est.ch - 2 - A * k;
+      const x = ox + t + i * (est.cw + t), y = oy + t + j * (est.ch + t);
+      const cx = x + hx * 0.5 + (est.cw - hx * 0.5 - L * k) / 2, base = y + est.ch - hy * 0.45, cy = base - A * k;
       const g = (px, py) => `${cx + px * k},${cy + py * k}`;
       const c = COL[(i * 7 + j * 4) % COL.length];
-      s += `<path d="M${g(2, 20)} L${g(4, 12)} L${g(20, 10)} L${g(30, 2)} L${g(52, 2)} L${g(62, 10)} L${g(73, 12)} L${g(74, 20)} Z" fill="${c}"/>`;
-      s += `<path d="M${g(32, 4)} L${g(50, 4)} L${g(57, 10)} L${g(26, 10)} Z" fill="#cfe3ef"/>`;
-      s += `<path d="M${g(6, 15)} L${g(70, 15)}" stroke="#fff" stroke-opacity=".55" stroke-width="${1.6 * k}"/>`;
-      s += `<circle cx="${cx + 17 * k}" cy="${cy + 21 * k}" r="${6.5 * k}" fill="#1b1b1b"/><circle cx="${cx + 60 * k}" cy="${cy + 21 * k}" r="${6.5 * k}" fill="#1b1b1b"/>`;
-      s += `<circle cx="${cx + 17 * k}" cy="${cy + 21 * k}" r="${2.6 * k}" fill="#c9c9c9"/><circle cx="${cx + 60 * k}" cy="${cy + 21 * k}" r="${2.6 * k}" fill="#c9c9c9"/>`;
+      const cuerpo = `M${g(2, 20)} L${g(4, 12)} L${g(20, 10)} L${g(30, 2)} L${g(52, 2)} L${g(62, 10)} L${g(73, 12)} L${g(74, 20)} Z`;
+      s += `<ellipse cx="${cx + 38 * k}" cy="${base}" rx="${36 * k}" ry="${2.4 * k}" fill="#000" opacity=".3"/>`;
+      s += `<path d="${cuerpo}" fill="${c}"/><path d="${cuerpo}" fill="url(#gBrillo)"/>`;
+      s += `<path d="M${g(32, 4)} L${g(50, 4)} L${g(57, 10)} L${g(26, 10)} Z" fill="#bfd9ea"/>`;
+      s += `<path d="M${g(41, 4)} L${g(42, 4)} L${g(42, 10)} L${g(41, 10)} Z" fill="${c}"/>`;
+      s += `<circle cx="${cx + 17 * k}" cy="${cy + 21 * k}" r="${6.5 * k}" fill="#151515"/><circle cx="${cx + 60 * k}" cy="${cy + 21 * k}" r="${6.5 * k}" fill="#151515"/>`;
+      s += `<circle cx="${cx + 17 * k}" cy="${cy + 21 * k}" r="${2.8 * k}" fill="#d6d6d6"/><circle cx="${cx + 60 * k}" cy="${cy + 21 * k}" r="${2.8 * k}" fill="#d6d6d6"/>`;
     }
   }
   // cotas
